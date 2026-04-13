@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>طبقي الصحي – أداة الطبق الصحي التفاعلية</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --green:#2d7a4f;--green-light:#e8f5ee;--green-mid:#4caf78;
+    --amber:#c97b1a;--amber-light:#fff3e0;
+    --red:#c0392b;--red-light:#fdecea;
+    --veg:#3a9b5c;--veg-light:#c8ecd6;
+    --carb:#e8a020;--carb-light:#fdecc8;
+    --protein:#c0392b;--protein-light:#fad4d0;
+    --fat:#8e44ad;--fat-light:#e8d5f5;
+    --bg:#fdfbf7;--text:#1a1a1a;--text-muted:#666;
+    --border:#e0d8cc;--card:#ffffff;--shadow:0 2px 12px rgba(0,0,0,0.08);
+  }
+  body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl;}
+  header{background:var(--green);color:white;text-align:center;padding:24px 20px 20px;}
+  header h1{font-size:26px;font-weight:700;margin-bottom:6px;}
+  header p{font-size:14px;opacity:.88;font-weight:400;}
+  .badge{display:inline-block;background:rgba(255,255,255,.2);border-radius:20px;padding:3px 12px;font-size:12px;margin-top:8px;}
+  main{max-width:1000px;margin:0 auto;padding:24px 16px;}
+  .layout{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;}
+  @media(max-width:700px){.layout{grid-template-columns:1fr;}}
+  .food-panel{background:var(--card);border-radius:16px;border:1px solid var(--border);padding:20px;box-shadow:var(--shadow);max-height:88vh;overflow-y:auto;}
+  .panel-title{font-size:15px;font-weight:700;color:var(--green);margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+  .category-label{font-size:12px;font-weight:600;color:var(--text-muted);margin:14px 0 8px;padding:4px 10px;border-radius:20px;display:inline-block;}
+  .cat-veg{background:var(--veg-light);color:var(--veg);}
+  .cat-carb{background:var(--carb-light);color:#8a5c00;}
+  .cat-protein{background:var(--protein-light);color:var(--protein);}
+  .cat-fat{background:var(--fat-light);color:var(--fat);}
+  .food-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:4px;}
+  .food-btn{border:1.5px solid var(--border);border-radius:12px;background:var(--bg);cursor:pointer;padding:10px 6px 8px;text-align:center;transition:all .18s;font-family:'Cairo',sans-serif;position:relative;}
+  .food-btn:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.12);}
+  .food-btn:active{transform:scale(.96);}
+  .food-btn .icon{font-size:24px;display:block;margin-bottom:4px;}
+  .food-btn .name{font-size:11px;font-weight:600;color:var(--text);display:block;line-height:1.3;}
+  .food-btn .kcal{font-size:10px;color:var(--text-muted);display:block;}
+  .food-btn.cat-veg-btn:hover{border-color:var(--veg);background:var(--veg-light);}
+  .food-btn.cat-carb-btn:hover{border-color:var(--carb);background:var(--carb-light);}
+  .food-btn.cat-protein-btn:hover{border-color:var(--protein);background:var(--protein-light);}
+  .food-btn.cat-fat-btn:hover{border-color:var(--fat);background:var(--fat-light);}
+  .count-badge{position:absolute;top:4px;left:4px;background:var(--green);color:white;font-size:10px;font-weight:700;border-radius:50%;width:18px;height:18px;display:none;align-items:center;justify-content:center;font-family:'Cairo',sans-serif;}
+  .plate-panel{display:flex;flex-direction:column;gap:16px;}
+  .plate-card{background:var(--card);border-radius:16px;border:1px solid var(--border);padding:20px;box-shadow:var(--shadow);}
+  .plate-wrapper{position:relative;width:220px;height:220px;margin:0 auto 16px;}
+  .plate-svg{width:100%;height:100%;}
+  .plate-center-text{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;}
+  .plate-center-text .big{font-size:22px;font-weight:700;}
+  .plate-center-text .small{font-size:10px;color:var(--text-muted);font-weight:500;}
+  .score-section{margin:4px 0 8px;}
+  .score-label{display:flex;justify-content:space-between;font-size:13px;font-weight:600;margin-bottom:6px;color:var(--text);}
+  .score-bar-bg{height:10px;background:var(--border);border-radius:6px;overflow:hidden;}
+  .score-bar-fill{height:100%;border-radius:6px;transition:width .5s ease,background .4s;background:var(--green-mid);}
+  .segments{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0;}
+  .seg{border-radius:10px;padding:8px 10px;display:flex;justify-content:space-between;align-items:center;}
+  .seg-label{font-size:12px;font-weight:600;}
+  .seg-bar-wrap{flex:1;margin:0 8px;height:5px;background:rgba(0,0,0,.1);border-radius:3px;overflow:hidden;}
+  .seg-bar{height:100%;border-radius:3px;transition:width .5s;}
+  .seg-pct{font-size:11px;font-weight:700;min-width:30px;text-align:left;}
+  .seg-veg{background:var(--veg-light);} .seg-veg .seg-label{color:var(--veg);} .seg-veg .seg-bar{background:var(--veg);} .seg-veg .seg-pct{color:var(--veg);}
+  .seg-carb{background:var(--carb-light);} .seg-carb .seg-label{color:#8a5c00;} .seg-carb .seg-bar{background:var(--carb);} .seg-carb .seg-pct{color:#8a5c00;}
+  .seg-protein{background:var(--protein-light);} .seg-protein .seg-label{color:var(--protein);} .seg-protein .seg-bar{background:var(--protein);} .seg-protein .seg-pct{color:var(--protein);}
+  .seg-fat{background:var(--fat-light);} .seg-fat .seg-label{color:var(--fat);} .seg-fat .seg-bar{background:var(--fat);} .seg-fat .seg-pct{color:var(--fat);}
+  .feedback-card{border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.6;font-weight:500;}
+  .feedback-good{background:var(--green-light);color:var(--green);border-right:4px solid var(--green);}
+  .feedback-warn{background:var(--amber-light);color:var(--amber);border-right:4px solid var(--amber);}
+  .feedback-bad{background:var(--red-light);color:var(--red);border-right:4px solid var(--red);}
+  .feedback-empty{background:#f0f0f0;color:var(--text-muted);text-align:center;padding:20px;}
+  .kcal-bar{display:flex;align-items:center;justify-content:space-between;background:#f7f3ef;border-radius:10px;padding:10px 14px;margin-top:8px;}
+  .kcal-num{font-size:20px;font-weight:700;color:var(--green);}
+  .kcal-label{font-size:12px;color:var(--text-muted);font-weight:500;}
+  .kcal-note{font-size:10px;color:var(--text-muted);font-style:italic;}
+  .plate-items{display:flex;flex-wrap:wrap;gap:6px;min-height:32px;margin-top:8px;}
+  .plate-item{display:flex;align-items:center;gap:4px;background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:3px 8px 3px 4px;font-size:11px;font-weight:600;animation:popIn .2s ease;}
+  @keyframes popIn{from{transform:scale(.8);opacity:0;}to{transform:scale(1);opacity:1;}}
+  .plate-item .remove{cursor:pointer;color:var(--text-muted);font-size:13px;line-height:1;margin-right:2px;}
+  .plate-item .remove:hover{color:var(--red);}
+  .reset-btn{width:100%;margin-top:12px;padding:10px;border:1.5px solid var(--border);border-radius:10px;background:white;font-family:'Cairo',sans-serif;font-size:13px;font-weight:600;color:var(--text-muted);cursor:pointer;transition:all .18s;}
+  .reset-btn:hover{border-color:var(--red);color:var(--red);background:var(--red-light);}
+  .legend{font-size:11px;color:var(--text-muted);text-align:center;margin-top:8px;line-height:1.5;}
+  footer{text-align:center;padding:24px 16px;font-size:11px;color:var(--text-muted);border-top:1px solid var(--border);line-height:1.7;margin-top:16px;}
+  footer a{color:var(--green);text-decoration:none;}
+  .tab-btn{flex:1;padding:8px;border-radius:10px;font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;}
+</style>
+</head>
+<body>
+<header>
+  <h1>🍽️ طبقي الصحي</h1>
+  <p>أداة تفاعلية لبناء طبقك الغذائي المتوازن</p>
+  <span class="badge">مبني على نموذج طبق هارفارد الصحي</span>
+</header>
+<main>
+  <div class="layout">
+
+    <!-- FOOD PANEL -->
+    <div class="food-panel">
+      <div class="panel-title">🧺 اختر أطعمتك</div>
+
+      <!-- TABS -->
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <button id="tab-ingredients" class="tab-btn" onclick="switchTab('ingredients')" style="border:1.5px solid var(--green);background:var(--green);color:white;">🥕 مكونات</button>
+        <button id="tab-dishes"      class="tab-btn" onclick="switchTab('dishes')"      style="border:1.5px solid var(--border);background:white;color:var(--text-muted);">🍲 أطباق عربية</button>
+      </div>
+
+      <input type="text" id="food-search" placeholder="🔍 ابحث عن طعام أو طبق..." oninput="filterFoods()"
+        style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;font-family:'Cairo',sans-serif;font-size:13px;margin-bottom:12px;outline:none;background:var(--bg);color:var(--text);">
+
+      <!-- INGREDIENTS TAB -->
+      <div id="panel-ingredients">
+        <span class="category-label cat-veg">🥦 خضروات وفواكه</span>
+        <div class="food-grid" id="grid-veg"></div>
+        <span class="category-label cat-carb">🍞 نشويات</span>
+        <div class="food-grid" id="grid-carb"></div>
+        <span class="category-label cat-protein">🍗 بروتين</span>
+        <div class="food-grid" id="grid-protein"></div>
+        <span class="category-label cat-fat">🫒 دهون صحية</span>
+        <div class="food-grid" id="grid-fat"></div>
+      </div>
+
+      <!-- DISHES TAB -->
+      <div id="panel-dishes" style="display:none;">
+        <div id="dishes-grid"></div>
+      </div>
+    </div>
+
+    <!-- PLATE PANEL -->
+    <div class="plate-panel">
+      <div class="plate-card">
+        <div class="panel-title">🍽️ طبقك الآن</div>
+        <div class="plate-wrapper">
+          <svg class="plate-svg" viewBox="0 0 220 220" id="plate-svg">
+            <circle cx="110" cy="110" r="108" fill="#ede8e0" stroke="#c8bfb2" stroke-width="2"/>
+            <path id="arc-veg"     d="" fill="#3a9b5c" opacity="0.22"/>
+            <path id="arc-carb"    d="" fill="#e8a020" opacity="0.22"/>
+            <path id="arc-protein" d="" fill="#c0392b" opacity="0.22"/>
+            <path id="arc-fat"     d="" fill="#8e44ad" opacity="0.22"/>
+            <g id="dividers"></g>
+            <text id="lbl-veg"     text-anchor="middle" font-family="Cairo,sans-serif" font-size="11" fill="#3a9b5c" font-weight="700"></text>
+            <text id="lbl-carb"    text-anchor="middle" font-family="Cairo,sans-serif" font-size="11" fill="#c8820a" font-weight="700"></text>
+            <text id="lbl-protein" text-anchor="middle" font-family="Cairo,sans-serif" font-size="11" fill="#c0392b" font-weight="700"></text>
+            <text id="lbl-fat"     text-anchor="middle" font-family="Cairo,sans-serif" font-size="11" fill="#8e44ad" font-weight="700"></text>
+            <circle cx="110" cy="110" r="108" fill="none" stroke="#c8bfb2" stroke-width="2"/>
+          </svg>
+          <div class="plate-center-text" id="plate-center">
+            <span class="big" id="center-icon">🍽️</span>
+            <span class="small" id="center-text">أضف طعامك</span>
+          </div>
+        </div>
+        <div class="score-section">
+          <div class="score-label"><span>درجة التوازن</span><span id="score-num">—</span></div>
+          <div class="score-bar-bg"><div class="score-bar-fill" id="score-bar" style="width:0%"></div></div>
+        </div>
+        <div class="segments">
+          <div class="seg seg-veg"><span class="seg-label">خضروات</span><div class="seg-bar-wrap"><div class="seg-bar" id="bar-veg" style="width:0%"></div></div><span class="seg-pct" id="pct-veg">0%</span></div>
+          <div class="seg seg-carb"><span class="seg-label">نشويات</span><div class="seg-bar-wrap"><div class="seg-bar" id="bar-carb" style="width:0%"></div></div><span class="seg-pct" id="pct-carb">0%</span></div>
+          <div class="seg seg-protein"><span class="seg-label">بروتين</span><div class="seg-bar-wrap"><div class="seg-bar" id="bar-protein" style="width:0%"></div></div><span class="seg-pct" id="pct-protein">0%</span></div>
+          <div class="seg seg-fat"><span class="seg-label">دهون</span><div class="seg-bar-wrap"><div class="seg-bar" id="bar-fat" style="width:0%"></div></div><span class="seg-pct" id="pct-fat">0%</span></div>
+        </div>
+        <div class="kcal-bar">
+          <div><div class="kcal-label">السعرات الحرارية التقريبية</div><div class="kcal-note">تقدير عام غير طبي</div></div>
+          <div style="text-align:left"><span class="kcal-num" id="kcal-num">0</span><span style="font-size:12px;color:var(--text-muted);font-weight:600;"> سعرة</span></div>
+        </div>
+      </div>
+
+      <div id="feedback-box" class="feedback-card feedback-empty">👆 اضغط على أي طعام أو طبق لإضافته إلى طبقك</div>
+
+      <div class="plate-card" id="items-card" style="display:none">
+        <div class="panel-title">🫙 ما في طبقك</div>
+        <div class="plate-items" id="plate-items"></div>
+        <button class="reset-btn" onclick="resetPlate()">🔄 إعادة تعيين الطبق</button>
+      </div>
+
+      <div class="legend">
+        الهدف: ½ خضروات | ¼ نشويات كاملة | ¼ بروتين + كمية صغيرة من الدهون الصحية<br>
+        بناءً على نموذج طبق هارفارد الصحي
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  هذه الأداة للتوعية الصحية العامة فقط وليست نصيحة طبية.<br>
+  مبنية على <a href="https://www.hsph.harvard.edu/nutritionsource/healthy-eating-plate/" target="_blank">طبق هارفارد الصحي</a> من كلية الصحة العامة بجامعة هارفارد.<br>
+  استشر طبيبك أو أخصائي التغذية لأي نظام غذائي شخصي.
+</footer>
+
+<script>
+// ── INGREDIENTS ──────────────────────────────────────────────
+const FOODS = [
+  // خضروات وفواكه
+  {id:'spinach',name:'سبانخ',icon:'🥬',cat:'veg',kcal:25,quality:'whole'},
+  {id:'tomato',name:'طماطم',icon:'🍅',cat:'veg',kcal:20,quality:'whole'},
+  {id:'carrot',name:'جزر',icon:'🥕',cat:'veg',kcal:35,quality:'whole'},
+  {id:'cucumber',name:'خيار',icon:'🥒',cat:'veg',kcal:15,quality:'whole'},
+  {id:'broccoli',name:'بروكلي',icon:'🥦',cat:'veg',kcal:30,quality:'whole'},
+  {id:'lettuce',name:'خس',icon:'🥗',cat:'veg',kcal:15,quality:'whole'},
+  {id:'apple',name:'تفاحة',icon:'🍎',cat:'veg',kcal:80,quality:'whole'},
+  {id:'banana',name:'موز',icon:'🍌',cat:'veg',kcal:90,quality:'whole'},
+  {id:'orange',name:'برتقالة',icon:'🍊',cat:'veg',kcal:60,quality:'whole'},
+  {id:'grape',name:'عنب',icon:'🍇',cat:'veg',kcal:70,quality:'whole'},
+  {id:'fig',name:'تين',icon:'🍈',cat:'veg',kcal:75,quality:'whole'},
+  {id:'pomegranate',name:'رمان',icon:'🍎',cat:'veg',kcal:85,quality:'whole'},
+  {id:'dates',name:'تمر',icon:'🟫',cat:'veg',kcal:280,quality:'whole'},
+  {id:'watermelon',name:'بطيخ',icon:'🍉',cat:'veg',kcal:30,quality:'whole'},
+  {id:'mango',name:'مانجو',icon:'🥭',cat:'veg',kcal:100,quality:'whole'},
+  {id:'lemon',name:'ليمون',icon:'🍋',cat:'veg',kcal:20,quality:'whole'},
+  {id:'onion',name:'بصل',icon:'🧅',cat:'veg',kcal:40,quality:'whole'},
+  {id:'garlic',name:'ثوم',icon:'🧄',cat:'veg',kcal:15,quality:'whole'},
+  {id:'pepper',name:'فلفل رومي',icon:'🫑',cat:'veg',kcal:25,quality:'whole'},
+  {id:'eggplant',name:'باذنجان',icon:'🍆',cat:'veg',kcal:25,quality:'whole'},
+  {id:'zucchini',name:'كوسة',icon:'🥒',cat:'veg',kcal:20,quality:'whole'},
+  {id:'okra',name:'بامية',icon:'🌿',cat:'veg',kcal:30,quality:'whole'},
+  {id:'artichoke',name:'خرشوف',icon:'🌱',cat:'veg',kcal:45,quality:'whole'},
+  {id:'turnip',name:'لفت',icon:'🟣',cat:'veg',kcal:28,quality:'whole'},
+  {id:'beet',name:'شمندر',icon:'🔴',cat:'veg',kcal:44,quality:'whole'},
+  {id:'pumpkin',name:'يقطين',icon:'🎃',cat:'veg',kcal:26,quality:'whole'},
+  {id:'parsley',name:'بقدونس',icon:'🌿',cat:'veg',kcal:10,quality:'whole'},
+  {id:'mint',name:'نعنع',icon:'🌱',cat:'veg',kcal:10,quality:'whole'},
+  {id:'molokhia_l',name:'ملوخية (خضار)',icon:'🥬',cat:'veg',kcal:35,quality:'whole'},
+  {id:'cabbage',name:'ملفوف',icon:'🥬',cat:'veg',kcal:25,quality:'whole'},
+  {id:'cauliflower',name:'قرنبيط',icon:'🥦',cat:'veg',kcal:25,quality:'whole'},
+  {id:'mushroom',name:'فطر',icon:'🍄',cat:'veg',kcal:22,quality:'whole'},
+  {id:'guava',name:'جوافة',icon:'🍐',cat:'veg',kcal:68,quality:'whole'},
+  {id:'apricot',name:'مشمش',icon:'🍑',cat:'veg',kcal:48,quality:'whole'},
+  // نشويات
+  {id:'rice',name:'أرز أبيض',icon:'🍚',cat:'carb',kcal:200,quality:'refined'},
+  {id:'brownrice',name:'أرز بني',icon:'🍱',cat:'carb',kcal:180,quality:'whole'},
+  {id:'bread',name:'خبز أبيض',icon:'🍞',cat:'carb',kcal:130,quality:'refined'},
+  {id:'wholbread',name:'خبز أسمر',icon:'🫓',cat:'carb',kcal:110,quality:'whole'},
+  {id:'pasta',name:'مكرونة',icon:'🍝',cat:'carb',kcal:210,quality:'refined'},
+  {id:'potato',name:'بطاطا مشوية',icon:'🥔',cat:'carb',kcal:120,quality:'whole'},
+  {id:'fries',name:'بطاطا مقلية',icon:'🍟',cat:'carb',kcal:320,quality:'processed'},
+  {id:'oats',name:'شوفان',icon:'🌾',cat:'carb',kcal:150,quality:'whole'},
+  {id:'khubz',name:'خبز عربي (بيتا)',icon:'🫓',cat:'carb',kcal:165,quality:'refined'},
+  {id:'taboon',name:'خبز طابون',icon:'🫓',cat:'carb',kcal:150,quality:'whole'},
+  {id:'samoon',name:'خبز سمون',icon:'🍞',cat:'carb',kcal:160,quality:'refined'},
+  {id:'baguette',name:'باجيت مغربي',icon:'🥖',cat:'carb',kcal:140,quality:'refined'},
+  {id:'couscous_i',name:'كسكس (حبوب)',icon:'🍚',cat:'carb',kcal:175,quality:'whole'},
+  {id:'bulgur',name:'برغل',icon:'🌾',cat:'carb',kcal:150,quality:'whole'},
+  {id:'freekeh',name:'فريكة',icon:'🌾',cat:'carb',kcal:140,quality:'whole'},
+  {id:'injera_l',name:'لحوح يمني',icon:'🥞',cat:'carb',kcal:160,quality:'whole'},
+  {id:'taro',name:'قلقاس',icon:'🥔',cat:'carb',kcal:112,quality:'whole'},
+  {id:'sweetpotato',name:'بطاطا حلوة',icon:'🍠',cat:'carb',kcal:103,quality:'whole'},
+  {id:'corn',name:'ذرة',icon:'🌽',cat:'carb',kcal:130,quality:'whole'},
+  {id:'kesra',name:'خبز كسرة',icon:'🫓',cat:'carb',kcal:145,quality:'whole'},
+  {id:'mloui',name:'ملاوي مغربي',icon:'🥞',cat:'carb',kcal:190,quality:'refined'},
+  {id:'mesmen',name:'مسمن مغربي',icon:'🥞',cat:'carb',kcal:210,quality:'refined'},
+  {id:'raqaq',name:'خبز رقاق',icon:'🫓',cat:'carb',kcal:130,quality:'refined'},
+  // بروتين
+  {id:'chicken_i',name:'دجاج مشوي',icon:'🍗',cat:'protein',kcal:165,quality:'whole'},
+  {id:'fish_i',name:'سمك مشوي',icon:'🐟',cat:'protein',kcal:150,quality:'whole'},
+  {id:'egg',name:'بيضة',icon:'🥚',cat:'protein',kcal:78,quality:'whole'},
+  {id:'lentils_i',name:'عدس',icon:'🫘',cat:'protein',kcal:120,quality:'whole'},
+  {id:'beef_i',name:'لحم بقري',icon:'🥩',cat:'protein',kcal:250,quality:'whole'},
+  {id:'lamb_i',name:'لحم خروف',icon:'🥩',cat:'protein',kcal:270,quality:'whole'},
+  {id:'tuna',name:'تونة',icon:'🐠',cat:'protein',kcal:130,quality:'whole'},
+  {id:'falafel_i',name:'فلافل',icon:'🧆',cat:'protein',kcal:180,quality:'whole'},
+  {id:'cheese',name:'جبن',icon:'🧀',cat:'protein',kcal:110,quality:'whole'},
+  {id:'hummus_i',name:'حمص بالطحينة',icon:'🫘',cat:'protein',kcal:170,quality:'whole'},
+  {id:'ful_i',name:'فول مدمس',icon:'🫘',cat:'protein',kcal:150,quality:'whole'},
+  {id:'chickpeas',name:'حمص مسلوق',icon:'🫘',cat:'protein',kcal:160,quality:'whole'},
+  {id:'beans',name:'فاصوليا',icon:'🫘',cat:'protein',kcal:130,quality:'whole'},
+  {id:'shrimp',name:'جمبري',icon:'🍤',cat:'protein',kcal:100,quality:'whole'},
+  {id:'sardine',name:'سردين',icon:'🐟',cat:'protein',kcal:190,quality:'whole'},
+  {id:'camel',name:'لحم إبل',icon:'🥩',cat:'protein',kcal:175,quality:'whole'},
+  {id:'rabbit',name:'أرنب',icon:'🥩',cat:'protein',kcal:160,quality:'whole'},
+  {id:'turkey',name:'ديك رومي',icon:'🍗',cat:'protein',kcal:135,quality:'whole'},
+  {id:'liver',name:'كبدة',icon:'🥩',cat:'protein',kcal:175,quality:'whole'},
+  {id:'labneh',name:'لبنة',icon:'🥛',cat:'protein',kcal:100,quality:'whole'},
+  {id:'yogurt',name:'زبادي',icon:'🥛',cat:'protein',kcal:80,quality:'whole'},
+  {id:'cottage',name:'جبن قريش',icon:'🧀',cat:'protein',kcal:90,quality:'whole'},
+  {id:'sausage',name:'نقانق',icon:'🌭',cat:'protein',kcal:290,quality:'processed'},
+  {id:'squid',name:'حبار',icon:'🦑',cat:'protein',kcal:92,quality:'whole'},
+  // دهون صحية
+  {id:'olive_oil',name:'زيت زيتون',icon:'🫒',cat:'fat',kcal:90,quality:'whole'},
+  {id:'olives',name:'زيتون',icon:'🫒',cat:'fat',kcal:80,quality:'whole'},
+  {id:'avocado',name:'أفوكادو',icon:'🥑',cat:'fat',kcal:120,quality:'whole'},
+  {id:'nuts',name:'مكسرات مشكلة',icon:'🥜',cat:'fat',kcal:170,quality:'whole'},
+  {id:'almonds',name:'لوز',icon:'🥜',cat:'fat',kcal:160,quality:'whole'},
+  {id:'walnuts',name:'جوز',icon:'🪨',cat:'fat',kcal:185,quality:'whole'},
+  {id:'sesame',name:'سمسم / طحينة',icon:'🌾',cat:'fat',kcal:180,quality:'whole'},
+  {id:'butter',name:'زبدة',icon:'🧈',cat:'fat',kcal:100,quality:'refined'},
+  {id:'ghee',name:'سمن بلدي',icon:'🧈',cat:'fat',kcal:115,quality:'refined'},
+  {id:'coconut',name:'جوز الهند',icon:'🥥',cat:'fat',kcal:150,quality:'whole'},
+  {id:'peanuts',name:'فول سوداني',icon:'🥜',cat:'fat',kcal:165,quality:'whole'},
+  {id:'pine',name:'صنوبر',icon:'🌲',cat:'fat',kcal:190,quality:'whole'},
+  {id:'pistachios',name:'فستق حلبي',icon:'🫘',cat:'fat',kcal:175,quality:'whole'},
+  {id:'cashews',name:'كاجو',icon:'🥜',cat:'fat',kcal:157,quality:'whole'},
+];
+
+// ── COMPLETE ARABIC DISHES ────────────────────────────────────
+const DISHES = [
+  // 🇯🇴🇵🇸🇱🇧🇸🇾 بلاد الشام
+  {id:'mansaf',name:'منسف أردني',icon:'🍲',region:'🇯🇴 الشام',kcal:650,quality:'whole',veg:5,carb:35,protein:50,fat:10},
+  {id:'mujaddara',name:'مجدرة',icon:'🍚',region:'🇯🇴 الشام',kcal:280,quality:'whole',veg:15,carb:50,protein:30,fat:5},
+  {id:'maqlouba',name:'مقلوبة',icon:'🍲',region:'🇵🇸 الشام',kcal:480,quality:'whole',veg:25,carb:40,protein:25,fat:10},
+  {id:'musakhan',name:'مسخن',icon:'🍗',region:'🇵🇸 الشام',kcal:480,quality:'whole',veg:20,carb:30,protein:35,fat:15},
+  {id:'fattoush',name:'فتوش',icon:'🥗',region:'🇱🇧 الشام',kcal:180,quality:'whole',veg:70,carb:20,protein:5,fat:5},
+  {id:'tabbouleh',name:'تبولة',icon:'🥗',region:'🇱🇧 الشام',kcal:150,quality:'whole',veg:75,carb:20,protein:5,fat:0},
+  {id:'kibbeh',name:'كبة مشوية',icon:'🥙',region:'🇸🇾 الشام',kcal:300,quality:'whole',veg:5,carb:30,protein:55,fat:10},
+  {id:'shawarma',name:'شاورما دجاج',icon:'🌯',region:'🇸🇾 الشام',kcal:420,quality:'processed',veg:15,carb:35,protein:40,fat:10},
+  {id:'falafel_d',name:'فلافل مع خضار',icon:'🧆',region:'🇵🇸 الشام',kcal:350,quality:'whole',veg:25,carb:30,protein:35,fat:10},
+  {id:'hummus_d',name:'حمص بالزيت',icon:'🫘',region:'🇱🇧 الشام',kcal:200,quality:'whole',veg:5,carb:30,protein:50,fat:15},
+  {id:'waraqenab',name:'ورق عنب محشي',icon:'🌿',region:'🇸🇾 الشام',kcal:250,quality:'whole',veg:20,carb:35,protein:35,fat:10},
+  {id:'shishbarak',name:'شيش برك',icon:'🥟',region:'🇱🇧 الشام',kcal:380,quality:'whole',veg:10,carb:35,protein:45,fat:10},
+  {id:'freekeh_d',name:'فريكة بالدجاج',icon:'🍲',region:'🇵🇸 الشام',kcal:400,quality:'whole',veg:10,carb:45,protein:35,fat:10},
+  {id:'shish_tawook',name:'شيش طاووق',icon:'🍢',region:'🇱🇧 الشام',kcal:280,quality:'whole',veg:15,carb:5,protein:65,fat:15},
+  {id:'fatteh',name:'فتة',icon:'🍲',region:'🇸🇾 الشام',kcal:420,quality:'refined',veg:10,carb:45,protein:30,fat:15},
+  // 🇪🇬 مصر
+  {id:'koshari',name:'كشري',icon:'🍝',region:'🇪🇬 مصر',kcal:450,quality:'whole',veg:10,carb:65,protein:20,fat:5},
+  {id:'ful_d',name:'فول مدمس مصري',icon:'🫘',region:'🇪🇬 مصر',kcal:250,quality:'whole',veg:10,carb:30,protein:50,fat:10},
+  {id:'molokhia_d',name:'ملوخية بالدجاج',icon:'🥬',region:'🇪🇬 مصر',kcal:280,quality:'whole',veg:45,carb:20,protein:30,fat:5},
+  {id:'feteer',name:'فطير مشلتيت',icon:'🥞',region:'🇪🇬 مصر',kcal:500,quality:'refined',veg:0,carb:70,protein:10,fat:20},
+  {id:'hamam_d',name:'حمام بالفريك',icon:'🍗',region:'🇪🇬 مصر',kcal:420,quality:'whole',veg:5,carb:35,protein:50,fat:10},
+  {id:'kofta_d',name:'كفتة مشوية',icon:'🥩',region:'🇪🇬 مصر',kcal:350,quality:'whole',veg:5,carb:10,protein:70,fat:15},
+  {id:'bamia_d',name:'بامية باللحمة',icon:'🌿',region:'🇪🇬 مصر',kcal:300,quality:'whole',veg:40,carb:15,protein:35,fat:10},
+  {id:'mahshi',name:'محشي كوسة',icon:'🥒',region:'🇪🇬 مصر',kcal:320,quality:'whole',veg:25,carb:40,protein:25,fat:10},
+  // 🇸🇦🇦🇪🇶🇦🇰🇼🇧🇭🇴🇲 الخليج
+  {id:'kabsa',name:'كبسة',icon:'🍲',region:'🇸🇦 الخليج',kcal:550,quality:'whole',veg:10,carb:45,protein:35,fat:10},
+  {id:'mandi',name:'مندي',icon:'🍗',region:'🇸🇦 الخليج',kcal:580,quality:'whole',veg:5,carb:40,protein:45,fat:10},
+  {id:'harees',name:'هريس',icon:'🥣',region:'🇦🇪 الخليج',kcal:400,quality:'whole',veg:0,carb:50,protein:40,fat:10},
+  {id:'machboos',name:'مجبوس',icon:'🍚',region:'🇰🇼 الخليج',kcal:520,quality:'whole',veg:10,carb:50,protein:30,fat:10},
+  {id:'saloona',name:'سالونة خضار',icon:'🥘',region:'🇦🇪 الخليج',kcal:220,quality:'whole',veg:55,carb:15,protein:25,fat:5},
+  {id:'jareesh',name:'جريش',icon:'🥣',region:'🇸🇦 الخليج',kcal:350,quality:'whole',veg:5,carb:60,protein:25,fat:10},
+  {id:'margoog',name:'مرقوق',icon:'🍲',region:'🇸🇦 الخليج',kcal:430,quality:'whole',veg:25,carb:40,protein:25,fat:10},
+  {id:'muhammar',name:'محمر (أرز حلو)',icon:'🍚',region:'🇧🇭 الخليج',kcal:380,quality:'refined',veg:0,carb:80,protein:5,fat:15},
+  {id:'thareed',name:'ثريد',icon:'🥘',region:'🇦🇪 الخليج',kcal:450,quality:'whole',veg:20,carb:40,protein:30,fat:10},
+  {id:'shuwa',name:'شواء عماني',icon:'🥩',region:'🇴🇲 الخليج',kcal:480,quality:'whole',veg:5,carb:15,protein:70,fat:10},
+  // 🇮🇶 العراق
+  {id:'masgouf',name:'مسقوف',icon:'🐟',region:'🇮🇶 العراق',kcal:380,quality:'whole',veg:10,carb:5,protein:75,fat:10},
+  {id:'dolma_iq',name:'دولمة عراقية',icon:'🌿',region:'🇮🇶 العراق',kcal:340,quality:'whole',veg:25,carb:40,protein:25,fat:10},
+  {id:'qouzi',name:'قوزي',icon:'🥩',region:'🇮🇶 العراق',kcal:600,quality:'whole',veg:5,carb:35,protein:50,fat:10},
+  {id:'tepsi',name:'طبسي باذنجان',icon:'🍆',region:'🇮🇶 العراق',kcal:320,quality:'whole',veg:45,carb:20,protein:25,fat:10},
+  {id:'pacha',name:'پاچا',icon:'🥘',region:'🇮🇶 العراق',kcal:420,quality:'whole',veg:10,carb:20,protein:60,fat:10},
+  {id:'biryani',name:'برياني',icon:'🍛',region:'🇮🇶 العراق',kcal:520,quality:'refined',veg:10,carb:55,protein:25,fat:10},
+  // 🇾🇪 اليمن
+  {id:'saltah',name:'سلطة يمنية',icon:'🥘',region:'🇾🇪 اليمن',kcal:350,quality:'whole',veg:20,carb:25,protein:45,fat:10},
+  {id:'fahsa',name:'فحسة',icon:'🥘',region:'🇾🇪 اليمن',kcal:380,quality:'whole',veg:10,carb:15,protein:65,fat:10},
+  {id:'asida_d',name:'عصيدة يمنية',icon:'🥣',region:'🇾🇪 اليمن',kcal:350,quality:'refined',veg:0,carb:70,protein:10,fat:20},
+  {id:'bint_sahn',name:'بنت الصحن',icon:'🥞',region:'🇾🇪 اليمن',kcal:450,quality:'refined',veg:0,carb:60,protein:5,fat:35},
+  {id:'lahoh',name:'لحوح مع عسل',icon:'🥞',region:'🇾🇪 اليمن',kcal:300,quality:'whole',veg:0,carb:70,protein:10,fat:20},
+  // 🇲🇦🇩🇿🇹🇳🇱🇾 المغرب العربي
+  {id:'tajine_chicken',name:'طاجن دجاج بالزيتون',icon:'🍲',region:'🇲🇦 المغرب',kcal:420,quality:'whole',veg:25,carb:10,protein:50,fat:15},
+  {id:'tajine_veg',name:'طاجن خضار',icon:'🥘',region:'🇲🇦 المغرب',kcal:250,quality:'whole',veg:65,carb:20,protein:5,fat:10},
+  {id:'couscous_d',name:'كسكس بالخضار واللحم',icon:'🍲',region:'🇲🇦 المغرب',kcal:500,quality:'whole',veg:30,carb:40,protein:20,fat:10},
+  {id:'harira',name:'حريرة',icon:'🍲',region:'🇲🇦 المغرب',kcal:200,quality:'whole',veg:35,carb:35,protein:25,fat:5},
+  {id:'pastilla',name:'بسطيلة',icon:'🥧',region:'🇲🇦 المغرب',kcal:550,quality:'refined',veg:5,carb:45,protein:30,fat:20},
+  {id:'chakchouka',name:'شكشوكة',icon:'🍳',region:'🇹🇳 تونس',kcal:230,quality:'whole',veg:55,carb:10,protein:25,fat:10},
+  {id:'ojja',name:'أوجة تونسية',icon:'🍳',region:'🇹🇳 تونس',kcal:280,quality:'whole',veg:40,carb:10,protein:35,fat:15},
+  {id:'brik',name:'بريك تونسي',icon:'🥐',region:'🇹🇳 تونس',kcal:320,quality:'refined',veg:10,carb:45,protein:30,fat:15},
+  {id:'chorba',name:'شوربة فريك جزائرية',icon:'🍲',region:'🇩🇿 الجزائر',kcal:220,quality:'whole',veg:30,carb:35,protein:30,fat:5},
+  {id:'rechta',name:'رشتة جزائرية',icon:'🍝',region:'🇩🇿 الجزائر',kcal:400,quality:'refined',veg:20,carb:55,protein:20,fat:5},
+  // 🌍 مشترك
+  {id:'shorba_adas',name:'شوربة عدس',icon:'🍲',region:'🌍 مشترك',kcal:180,quality:'whole',veg:20,carb:35,protein:40,fat:5},
+  {id:'shorba_khodr',name:'شوربة خضار',icon:'🥣',region:'🌍 مشترك',kcal:120,quality:'whole',veg:70,carb:20,protein:5,fat:5},
+  {id:'salata_arabi',name:'سلطة عربية',icon:'🥗',region:'🌍 مشترك',kcal:100,quality:'whole',veg:80,carb:10,protein:5,fat:5},
+  {id:'samak_mashwi',name:'سمك مشوي بالليمون',icon:'🐟',region:'🌍 مشترك',kcal:220,quality:'whole',veg:10,carb:5,protein:75,fat:10},
+  {id:'macarona_b3',name:'مكرونة بالبشاميل',icon:'🍝',region:'🌍 مشترك',kcal:480,quality:'refined',veg:5,carb:55,protein:25,fat:15},
+];
+
+// ── STATE ──────────────────────────────────────────────────────
+let plate = {};
+let currentTab = 'ingredients';
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.getElementById('panel-ingredients').style.display = tab==='ingredients' ? '' : 'none';
+  document.getElementById('panel-dishes').style.display = tab==='dishes' ? '' : 'none';
+  const ti=document.getElementById('tab-ingredients'), td=document.getElementById('tab-dishes');
+  ti.style.background = tab==='ingredients' ? 'var(--green)' : 'white';
+  ti.style.color = tab==='ingredients' ? 'white' : 'var(--text-muted)';
+  ti.style.borderColor = tab==='ingredients' ? 'var(--green)' : 'var(--border)';
+  td.style.background = tab==='dishes' ? 'var(--green)' : 'white';
+  td.style.color = tab==='dishes' ? 'white' : 'var(--text-muted)';
+  td.style.borderColor = tab==='dishes' ? 'var(--green)' : 'var(--border)';
+  filterFoods();
+}
+
+function initFoodButtons() {
+  const grids={veg:'grid-veg',carb:'grid-carb',protein:'grid-protein',fat:'grid-fat'};
+  const catClass={veg:'cat-veg-btn',carb:'cat-carb-btn',protein:'cat-protein-btn',fat:'cat-fat-btn'};
+  FOODS.forEach(f => {
+    const btn=document.createElement('button');
+    btn.className=`food-btn ${catClass[f.cat]}`;
+    btn.id=`btn-${f.id}`;
+    btn.innerHTML=`<span class="count-badge" id="cnt-${f.id}">0</span><span class="icon">${f.icon}</span><span class="name">${f.name}</span><span class="kcal">${f.kcal} سعرة</span>`;
+    btn.onclick=()=>addFood(f.id);
+    document.getElementById(grids[f.cat]).appendChild(btn);
+  });
+
+  const regions={};
+  DISHES.forEach(d => { if(!regions[d.region]) regions[d.region]=[]; regions[d.region].push(d); });
+  const dishesGrid=document.getElementById('dishes-grid');
+  Object.entries(regions).forEach(([region,dishes]) => {
+    const label=document.createElement('span');
+    label.className='category-label cat-protein';
+    label.style.cssText='margin-bottom:8px;display:block;';
+    label.textContent=region;
+    dishesGrid.appendChild(label);
+    const grid=document.createElement('div');
+    grid.className='food-grid';
+    dishes.forEach(d => {
+      const btn=document.createElement('button');
+      btn.className='food-btn cat-protein-btn';
+      btn.id=`btn-${d.id}`;
+      if(d.quality==='processed') btn.style.borderColor='#f5c6c3';
+      else if(d.quality==='refined') btn.style.borderColor='#fdecc8';
+      btn.innerHTML=`<span class="count-badge" id="cnt-${d.id}">0</span><span class="icon">${d.icon}</span><span class="name">${d.name}</span><span class="kcal">${d.kcal} سعرة</span>`;
+      btn.onclick=()=>addFood(d.id);
+      grid.appendChild(btn);
+    });
+    dishesGrid.appendChild(grid);
+  });
+}
+
+function addFood(id) { plate[id]=(plate[id]||0)+1; updateUI(); }
+function removeFood(id) { if(!plate[id]) return; plate[id]--; if(!plate[id]) delete plate[id]; updateUI(); }
+function resetPlate() { plate={}; updateUI(); }
+
+function filterFoods() {
+  const q=(document.getElementById('food-search').value||'').trim();
+  if(currentTab==='ingredients') {
+    FOODS.forEach(f => { const b=document.getElementById(`btn-${f.id}`); if(b) b.style.display=!q||f.name.includes(q)?'':'none'; });
+  } else {
+    DISHES.forEach(d => { const b=document.getElementById(`btn-${d.id}`); if(b) b.style.display=!q||d.name.includes(q)||d.region.includes(q)?'':'none'; });
+  }
+}
+
+function getAllItems() {
+  let totKcal=0, cats={veg:0,carb:0,protein:0,fat:0}, processedCount=0, totalWeight=0;
+  Object.entries(plate).forEach(([id,count]) => {
+    const ingredient=FOODS.find(x=>x.id===id);
+    const dish=DISHES.find(x=>x.id===id);
+    const item=ingredient||dish;
+    if(!item) return;
+    totKcal+=item.kcal*count;
+    if(item.quality==='processed') processedCount+=count;
+    if(dish) {
+      const t=dish.veg+dish.carb+dish.protein+dish.fat;
+      cats.veg+=(dish.veg/t)*count; cats.carb+=(dish.carb/t)*count;
+      cats.protein+=(dish.protein/t)*count; cats.fat+=(dish.fat/t)*count;
+    } else {
+      cats[ingredient.cat]+=count;
+    }
+    totalWeight+=count;
+  });
+  return {totKcal,cats,processedCount,totalItems:totalWeight};
+}
+
+function calcScore(cats,totalItems,processedCount) {
+  if(!totalItems) return 0;
+  let score=100;
+  const vp=cats.veg/totalItems, cp=cats.carb/totalItems, fp=cats.fat/totalItems;
+  if(vp<0.40) score-=Math.round((0.40-vp)*100);
+  if(cp>0.35) score-=Math.round((cp-0.35)*60);
+  if(fp>0.20) score-=Math.round((fp-0.20)*60);
+  score-=processedCount*8;
+  return Math.max(0,Math.min(100,score));
+}
+
+function polarToXY(cx,cy,r,angleDeg) {
+  const rad=(angleDeg-90)*Math.PI/180;
+  return {x:cx+r*Math.cos(rad),y:cy+r*Math.sin(rad)};
+}
+function makeArc(cx,cy,r,startDeg,endDeg) {
+  if(endDeg-startDeg>=360) return `M ${cx},${cy-r} A ${r},${r} 0 1,1 ${cx-0.01},${cy-r} Z`;
+  const s=polarToXY(cx,cy,r,startDeg), e=polarToXY(cx,cy,r,endDeg);
+  return `M ${cx},${cy} L ${s.x},${s.y} A ${r},${r} 0 ${endDeg-startDeg>180?1:0},1 ${e.x},${e.y} Z`;
+}
+
+function updatePlateViz(cats,totalItems) {
+  const cx=110,cy=110,r=100;
+  const colors={veg:'#3a9b5c',carb:'#e8a020',protein:'#c0392b',fat:'#8e44ad'};
+  const icons={veg:'🥦',carb:'🍞',protein:'🍗',fat:'🫒'};
+  let startDeg=0;
+  document.getElementById('dividers').innerHTML='';
+  ['veg','carb','protein','fat'].forEach(cat => {
+    const sweep=totalItems>0?((cats[cat]||0)/totalItems)*360:0;
+    const endDeg=startDeg+sweep;
+    const arcEl=document.getElementById(`arc-${cat}`), lblEl=document.getElementById(`lbl-${cat}`);
+    arcEl.setAttribute('d',sweep>0?makeArc(cx,cy,r,startDeg,endDeg):'');
+    arcEl.setAttribute('fill',colors[cat]); arcEl.setAttribute('opacity','0.22');
+    if(sweep>18){const lp=polarToXY(cx,cy,65,startDeg+sweep/2);lblEl.setAttribute('x',lp.x);lblEl.setAttribute('y',lp.y+4);lblEl.textContent=icons[cat];lblEl.setAttribute('font-size','16');}
+    else lblEl.textContent='';
+    if(sweep>0&&totalItems>0){
+      const dp=polarToXY(cx,cy,r,startDeg);
+      const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+      line.setAttribute('x1',cx);line.setAttribute('y1',cy);line.setAttribute('x2',dp.x);line.setAttribute('y2',dp.y);
+      line.setAttribute('stroke','#c8bfb2');line.setAttribute('stroke-width','1.5');
+      document.getElementById('dividers').appendChild(line);
+    }
+    startDeg=endDeg;
+  });
+}
+
+function updateUI() {
+  const {totKcal,cats,processedCount,totalItems}=getAllItems();
+  const score=calcScore(cats,totalItems,processedCount);
+
+  [...FOODS,...DISHES].forEach(f => {
+    const cnt=plate[f.id]||0, badge=document.getElementById(`cnt-${f.id}`);
+    if(badge){badge.textContent=cnt;badge.style.display=cnt>0?'flex':'none';}
+  });
+
+  updatePlateViz(cats,totalItems);
+  ['veg','carb','protein','fat'].forEach(cat => {
+    const pct=totalItems>0?Math.round((cats[cat]||0)/totalItems*100):0;
+    document.getElementById(`bar-${cat}`).style.width=pct+'%';
+    document.getElementById(`pct-${cat}`).textContent=pct+'%';
+  });
+
+  document.getElementById('score-num').textContent=totalItems>0?score+'%':'—';
+  const bar=document.getElementById('score-bar');
+  bar.style.width=score+'%';
+  bar.style.background=score>=70?'#2d7a4f':score>=45?'#c97b1a':'#c0392b';
+  document.getElementById('kcal-num').textContent=totKcal;
+
+  const ci=document.getElementById('center-icon'),ct=document.getElementById('center-text');
+  if(!totalItems){ci.textContent='🍽️';ct.textContent='أضف طعامك';ct.style.color='var(--text-muted)';}
+  else{ci.textContent=score>=70?'✅':score>=45?'⚠️':'❗';ct.textContent=score+'%';ct.style.color=score>=70?'var(--green)':score>=45?'var(--amber)':'var(--red)';}
+
+  const fb=document.getElementById('feedback-box');
+  if(!totalItems){fb.className='feedback-card feedback-empty';fb.innerHTML='👆 اضغط على أي طعام أو طبق لإضافته إلى طبقك';}
+  else{
+    const msgs=[];
+    const vp=(cats.veg||0)/totalItems, cp=(cats.carb||0)/totalItems, pp=(cats.protein||0)/totalItems, fp=(cats.fat||0)/totalItems;
+    if(vp<0.30) msgs.push('🥦 يُفضَّل زيادة الخضار والفواكه في طبقك');
+    else if(vp>=0.45) msgs.push('✅ ممتاز! نسبة الخضار والفواكه جيدة جداً');
+    else msgs.push('👍 نسبة الخضار معقولة، حاول زيادتها قليلاً');
+    if(cp>0.40) msgs.push('⚠️ كمية النشويات مرتفعة نسبياً');
+    else if(cp>0) msgs.push('✅ توزيع النشويات مناسب');
+    if(pp===0) msgs.push('🍗 لم تضف بروتيناً بعد، جرب دجاجاً أو سمكاً أو عدساً');
+    else if(pp>=0.20&&pp<=0.35) msgs.push('✅ كمية البروتين متوازنة');
+    if(processedCount>0) msgs.push('⚠️ يحتوي طبقك على أطعمة مصنعة، حاول تقليلها');
+    if(fp===0) msgs.push('🫒 يمكنك إضافة كمية صغيرة من الدهون الصحية');
+    else if(fp>0.25) msgs.push('⚠️ الدهون مرتفعة نسبياً، قلل الكمية');
+    fb.className=`feedback-card ${score>=70?'feedback-good':score>=45?'feedback-warn':'feedback-bad'}`;
+    fb.innerHTML=msgs.map(m=>`<div style="margin-bottom:4px">${m}</div>`).join('');
+  }
+
+  const itemsCard=document.getElementById('items-card'), itemsList=document.getElementById('plate-items');
+  if(!totalItems){itemsCard.style.display='none';}
+  else{
+    itemsCard.style.display='block';itemsList.innerHTML='';
+    Object.entries(plate).forEach(([id,count]) => {
+      const item=[...FOODS,...DISHES].find(x=>x.id===id);
+      if(!item||!count) return;
+      const chip=document.createElement('div');chip.className='plate-item';
+      chip.innerHTML=`<span class="remove" onclick="removeFood('${id}')">✕</span><span>${item.icon} ${item.name}</span>${count>1?`<span style="background:#eee;border-radius:10px;padding:1px 6px;font-size:10px;">x${count}</span>`:''}`;
+      itemsList.appendChild(chip);
+    });
+  }
+}
+
+initFoodButtons();
+updateUI();
+</script>
+</body>
+</html>
